@@ -11,25 +11,24 @@ import (
 )
 
 type User struct {
-	id         int    `gorm:autoIncrement;primaryKey`
-	email      string `gorm:"type:varchar(100);uniqueIndex"`
-	submit     int
-	solved     int
-	defunct    bool      `gorm:"not null"`
-	ip         string    `gorm:"type:varchar(48);not null"`
-	createTime time.Time `gorm:"type:datetime;autoCreateTime;not null"`
-	password   string    `gorm:"type:varchar(20);not null"`
-	nickName   string    `gorm:"type:varchar(100);not null"`
-	school     string    `gorm:"type:varchar(100);"`
-	role       string    `gorm:"type:varchar(20);not null"`
+	Id         int    `gorm:autoIncrement;primaryKey`
+	Email      string `gorm:"type:varchar(100);uniqueIndex"`
+	Submit     int
+	Solved     int
+	Defunct    bool      `gorm:"not null"`
+	Ip         string    `gorm:"type:varchar(48);not null"`
+	CreateTime time.Time `gorm:"type:datetime;autoCreateTime;not null"`
+	Password   string    `gorm:"type:varchar(20);not null"`
+	NickName   string    `gorm:"type:varchar(100);not null"`
+	School     string    `gorm:"type:varchar(100);"`
+	Role       string    `gorm:"type:varchar(20);not null"`
 }
 
 func main() {
 	db := InitDB()
 	defer db.Close()
-
 	r := gin.Default()
-	r.GET("/api/auth/register", func(ctx *gin.Context) {
+	r.POST("/api/auth/register", func(ctx *gin.Context) {
 
 		// 获取参数
 		nickname := ctx.PostForm("nick")
@@ -43,6 +42,7 @@ func main() {
 				"code": 422,
 				"msg":  "用户名的长度必须小于100字节",
 			})
+			return
 		}
 
 		if len(password1) < 6 {
@@ -50,6 +50,7 @@ func main() {
 				"code": 422,
 				"msg":  "密码不能小于6位",
 			})
+			return
 		}
 
 		if password1 != password2 {
@@ -57,6 +58,7 @@ func main() {
 				"code": 422,
 				"msg":  "两次密码不一致",
 			})
+			return
 		}
 		if isEmailExist(db, email) {
 			ctx.JSON(http.StatusUnprocessableEntity, gin.H{
@@ -67,16 +69,16 @@ func main() {
 		}
 
 		newUser := User{
-			email:      email,
-			submit:     0,
-			solved:     0,
-			defunct:    false,
-			ip:         "",
-			createTime: time.Now(),
-			password:   password1,
-			nickName:   nickname,
-			school:     "",
-			role:       "common",
+			Email:      email,
+			Submit:     0,
+			Solved:     0,
+			Defunct:    false,
+			Ip:         "",
+			CreateTime: time.Now(),
+			Password:   password1,
+			NickName:   nickname,
+			School:     "",
+			Role:       "common",
 		}
 		db.Create(&newUser)
 		ctx.JSON(200, gin.H{
@@ -89,7 +91,7 @@ func main() {
 func isEmailExist(db *gorm.DB, email string) bool {
 	var user User
 	db.Where("email = ?", email).First(&user)
-	if len(email) > 0 {
+	if user.Id > 0 {
 		return true
 	}
 	return false
@@ -114,6 +116,7 @@ func InitDB() *gorm.DB {
 	if err != nil {
 		log.Fatal("failed to connect database ,err:", err)
 	}
+	db.SingularTable(true) // 禁止表名为结构体的复数
 	db.AutoMigrate(&User{})
 	return db
 }
