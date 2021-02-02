@@ -22,6 +22,8 @@ func Log(logFileName string, level int) *log.Logger {
 		logFile *os.File
 		err     error
 	)
+	defer logFile.Close()
+
 	var levelString string
 	switch level {
 	case UNKNOWN:
