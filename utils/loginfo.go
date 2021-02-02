@@ -25,7 +25,7 @@ func Log(logFileName string, level int) *log.Logger {
 	var levelString string
 	switch level {
 	case UNKNOWN:
-		levelString = "[UNKOWN] "
+		levelString = "[UNKNOWN] "
 	case DEBUG:
 		levelString = "[DEBUG] "
 	case TRACE:
@@ -40,12 +40,13 @@ func Log(logFileName string, level int) *log.Logger {
 		levelString = "[FATAL] "
 	}
 	if len(logFileName) == 0 {
-		logFile = os.Stdout
+		logFile = os.Stderr
 	} else {
-		logFile, err = os.OpenFile("./log/"+logFileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+		str, _ := os.Getwd()
+		logFile, err = os.OpenFile(str+"/log/"+logFileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	}
 	if err != nil {
-		log.Fatal("日志文件无法正常打开")
+		log.Fatal("日志文件无法正常打开", err)
 	}
 	return log.New(logFile, levelString, log.Ldate|log.Ltime|log.Lshortfile)
 }
