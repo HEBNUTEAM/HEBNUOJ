@@ -5,6 +5,7 @@ import (
 	"github.com/HEBNUOJ/model"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
+	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"time"
 )
@@ -48,7 +49,14 @@ func Register(ctx *gin.Context) {
 		})
 		return
 	}
-
+	hasedPassword, err := bcrypt.GenerateFromPassword([]byte(password1), bcrypt.DefaultCost)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "加密错误",
+		})
+		return
+	}
 	newUser := model.User{
 		Email:      email,
 		Submit:     0,
@@ -56,7 +64,7 @@ func Register(ctx *gin.Context) {
 		Defunct:    false,
 		Ip:         "",
 		CreateTime: time.Now(),
-		Password:   password1,
+		Password:   string(hasedPassword),
 		NickName:   nickname,
 		School:     "",
 		Role:       "common",
@@ -64,6 +72,40 @@ func Register(ctx *gin.Context) {
 	db.Create(&newUser)
 	ctx.JSON(200, gin.H{
 		"msg": "注册成功",
+	})
+}
+
+func Login(ctx *gin.Context) {
+	db := common.GetDB()
+	// 获取参数
+	email := ctx.PostForm("email")
+	//verification := ctx.PostForm("verification")
+	password := ctx.PostForm("pwd")
+
+	// 判断用户是否存在
+	var user model.User
+	db.Where("email = ?", email).First(&user)
+	if user.Id == 0 {
+		ctx.JSON(http.StatusUnprocessableEntity, gin.H{
+			"code": 422,
+			"msg":  "用户不存在",
+		})
+		return
+	}
+	// 判断密码是否正确
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"code": 400,
+			"msg":  "密码错误",
+		})
+	}
+
+	// 发放token给前端
+	token := "2333"
+	ctx.JSON(200, gin.H{
+		"code": 200,
+		"data": gin.H{"token": token},
+		"msg":  "登陆成功",
 	})
 }
 
