@@ -3,6 +3,7 @@ package controller
 import (
 	"github.com/HEBNUOJ/common"
 	"github.com/HEBNUOJ/model"
+	"github.com/HEBNUOJ/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
@@ -57,12 +58,16 @@ func Register(ctx *gin.Context) {
 		})
 		return
 	}
+	ip := ctx.ClientIP()
+	if ip == "::1" {
+		ip = "127.0.0.1"
+	}
 	newUser := model.User{
 		Email:      email,
 		Submit:     0,
 		Solved:     0,
 		Defunct:    false,
-		Ip:         "",
+		Ip:         ip,
 		CreateTime: time.Now(),
 		Password:   string(hasedPassword),
 		NickName:   nickname,
@@ -88,7 +93,7 @@ func Login(ctx *gin.Context) {
 	if user.Id == 0 {
 		ctx.JSON(http.StatusUnprocessableEntity, gin.H{
 			"code": 422,
-			"msg":  "用户不存在",
+			"msg":  "用户不存在或邮箱错误",
 		})
 		return
 	}
@@ -101,11 +106,27 @@ func Login(ctx *gin.Context) {
 	}
 
 	// 发放token给前端
-	token := "2333"
+	token, err := common.ReleaseToken(user)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "系统异常",
+		})
+		utils.Log("token.log", 5).Println(err) // 记录错误日志
+		return
+	}
 	ctx.JSON(200, gin.H{
 		"code": 200,
 		"data": gin.H{"token": token},
 		"msg":  "登陆成功",
+	})
+}
+
+func Info(ctx *gin.Context) {
+	user, _ := ctx.Get("user")
+	ctx.JSON(http.StatusOK, gin.H{
+		"code": 200,
+		"data": gin.H{"user": user},
 	})
 }
 
