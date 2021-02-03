@@ -2,6 +2,7 @@ package controller
 
 import (
 	"github.com/HEBNUOJ/common"
+	"github.com/HEBNUOJ/dto"
 	"github.com/HEBNUOJ/model"
 	"github.com/HEBNUOJ/utils"
 	"github.com/gin-gonic/gin"
@@ -20,10 +21,10 @@ func Register(ctx *gin.Context) {
 	password1 := ctx.PostForm("pwd1")
 	password2 := ctx.PostForm("pwd2")
 
-	if len(nickname) > 100 {
+	if len(nickname) > 25 || len(nickname) == 0 {
 		ctx.JSON(http.StatusUnprocessableEntity, gin.H{
 			"code": 422,
-			"msg":  "用户名的长度必须小于100字节",
+			"msg":  "用户名的长度必须大于等于1个字符，小于等于25个字符",
 		})
 		return
 	}
@@ -103,6 +104,7 @@ func Login(ctx *gin.Context) {
 			"code": 400,
 			"msg":  "密码错误",
 		})
+		return
 	}
 
 	// 发放token给前端
@@ -126,7 +128,7 @@ func Info(ctx *gin.Context) {
 	user, _ := ctx.Get("user")
 	ctx.JSON(http.StatusOK, gin.H{
 		"code": 200,
-		"data": gin.H{"user": user},
+		"data": gin.H{"user": dto.ToUserDto(user.(model.User))},
 	})
 }
 
