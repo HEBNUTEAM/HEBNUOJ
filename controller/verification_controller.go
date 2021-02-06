@@ -2,7 +2,6 @@ package controller
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/HEBNUOJ/dto"
 	"github.com/HEBNUOJ/response"
 	"github.com/dchest/captcha"
@@ -40,8 +39,7 @@ func (serviceCheckCode *CheckCodeController) GenVerifyCode(ctx *gin.Context) {
 	ctx.Writer.Header().Set("Pragma", "no-cache")
 	ctx.Writer.Header().Set("Expires", "0")
 	ctx.Writer.Header().Set("Content-Type", "image/png")
-	id := ctx.Param("id")
-	fmt.Println(id)
+	id := ctx.Param("captchaId")
 	var content bytes.Buffer
 	captcha.WriteImage(&content, id, 100, 50)
 	http.ServeContent(ctx.Writer, ctx.Request, id+".png", time.Time{}, bytes.NewReader(content.Bytes()))

@@ -16,10 +16,9 @@ func CollectRegisterAndLoginRoute(r *gin.Engine) *gin.Engine {
 }
 
 func CollectVerifyRoute(r *gin.Engine) *gin.Engine {
-	//VerifyRoute := r.Group("/verifycode")
 	checkCodeController := new(controller.CheckCodeController)
 	r.GET("/api/refresh", checkCodeController.ReloadVerifyCode)
-	r.GET("/api/show/:id", checkCodeController.GenVerifyCode)
+	r.GET("/api/show/:captchaId", checkCodeController.GenVerifyCode)
 	r.GET("/api/verify", checkCodeController.VerifyCode)
 	return r
 }
