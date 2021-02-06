@@ -6,6 +6,7 @@ import (
 	"github.com/HEBNUOJ/model"
 	"github.com/HEBNUOJ/response"
 	"github.com/HEBNUOJ/utils"
+	"github.com/HEBNUOJ/vo"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
@@ -15,12 +16,14 @@ import (
 
 func Register(ctx *gin.Context) {
 	db := common.GetDB()
+	requestUser := vo.LoginVo{}
+	ctx.Bind(&requestUser)
 	// 获取参数
-	nickname := ctx.PostForm("nick")
-	email := ctx.PostForm("email")
-	//verification := ctx.PostForm("verification")
-	password1 := ctx.PostForm("pwd1")
-	password2 := ctx.PostForm("pwd2")
+	nickname := requestUser.NickName
+	email := requestUser.Email
+	//verification := requestUser.Verification
+	password1 := requestUser.Password1
+	password2 := requestUser.Password2
 
 	if len(nickname) > 25 || len(nickname) == 0 {
 		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil,
@@ -69,11 +72,12 @@ func Register(ctx *gin.Context) {
 
 func Login(ctx *gin.Context) {
 	db := common.GetDB()
+	requestUser := vo.LoginVo{}
+	ctx.Bind(&requestUser)
 	// 获取参数
-	email := ctx.PostForm("email")
-	//verification := ctx.PostForm("verification")
-	password := ctx.PostForm("pwd")
-
+	email := requestUser.Email
+	//verification := requestUser.Verification
+	password := requestUser.Password1
 	// 判断用户是否存在
 	var user model.User
 	db.Where("email = ?", email).First(&user)
