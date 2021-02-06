@@ -13,7 +13,8 @@ func main() {
 	utils.InitDbConfig()
 	db := common.InitDB()
 	defer db.Close()
-	r := router.CollectRoute(gin.Default())
+	r := router.CollectRegisterAndLoginRoute(gin.Default())
+	r = router.CollectVerifyRoute(r)
 	port := viper.GetString("server.port")
 	if port != "" {
 		panic(r.Run(":" + port))
