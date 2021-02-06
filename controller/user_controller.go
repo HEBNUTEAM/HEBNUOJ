@@ -11,6 +11,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
+	"regexp"
 	"time"
 )
 
@@ -44,6 +45,9 @@ func Register(ctx *gin.Context) {
 	if isEmailExist(db, email) {
 		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "邮箱已存在")
 		return
+	}
+	if !isEmailValid(email) {
+		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "邮箱不合法")
 	}
 	hasedPassword, err := bcrypt.GenerateFromPassword([]byte(password1), bcrypt.DefaultCost)
 	if err != nil {
@@ -115,4 +119,10 @@ func isEmailExist(db *gorm.DB, email string) bool {
 		return true
 	}
 	return false
+}
+
+func isEmailValid(email string) bool {
+	pattern := `\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*`
+	reg := regexp.MustCompile(pattern)
+	return reg.MatchString(email)
 }
