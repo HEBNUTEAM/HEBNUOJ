@@ -2,7 +2,6 @@ package controller
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/HEBNUOJ/common"
 	"github.com/HEBNUOJ/dto"
 	"github.com/HEBNUOJ/response"
@@ -57,23 +56,38 @@ func (serviceCheckCode *CheckCodeController) GenVerifyCode(ctx *gin.Context) {
 func (serviceCheckCode *CheckCodeController) GenEmailVerifyCode(ctx *gin.Context) {
 	requestUser := vo.LoginVo{}
 	ctx.Bind(&requestUser)
-	client := common.GetRedisClient()
 	email := requestUser.Email
+	client := common.GetRedisClient()
 	if client.Exists(email).Val() > 0 {
 		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil,
 			"邮箱验证码已存在")
 		return
 	}
-	randCode := make([]byte, 10)
-	rand.Read(randCode)
-	fmt.Println(randCode)
-	err := client.Set(email, randCode, time.Minute*10).Err() // 验证码有效期10分钟
+	code := randCode()
+	err := sendEmailVerifyCode(email, code)
+	if err != nil { // 如果发送邮件失败则不插入数据库中，防止重复发送
+		return
+	}
+	err = client.Set(email, code, time.Minute*10).Err() // 验证码有效期10分钟
 	if err != nil {
 		utils.Log("email_code.log", 1).Println("验证码键值对插入redis失败", err)
 		return
 	}
-	sendEmailVerifyCode(email, string(randCode))
 	response.Success(ctx, nil, "邮箱验证码申请成功")
+}
+
+func (serviceCheckCode *CheckCodeController) VerifyEmailCode(ctx *gin.Context) {
+	email := ctx.Query("email")
+	code := ctx.Query("code")
+	client := common.GetRedisClient()
+	incode, err := client.Get(email).Result()
+	if err != nil {
+		utils.Log("email_code.log", 1).Println("redis get出错", err)
+		return
+	}
+	if incode == code {
+		response.Success(ctx, nil, "邮箱验证码验证成功")
+	}
 }
 
 // 发送邮箱验证码
@@ -88,7 +102,7 @@ func sendEmailVerifyCode(email, code string) error {
 
 	m := gomail.NewMessage()
 	subject := "测试邮件"
-	body := "验证码为：" + code
+	body := "验证码为：" + code + ", 本次验证码有效时间为10分钟。"
 	m.SetHeader("From", m.FormatAddress(mailConn["user"], "HENUOJ官方"))
 	m.SetHeader("To", email)        //发送给多个用户
 	m.SetHeader("Subject", subject) //设置邮件主题
@@ -97,5 +111,17 @@ func sendEmailVerifyCode(email, code string) error {
 	d := gomail.NewDialer(mailConn["host"], port, mailConn["user"], mailConn["pass"])
 
 	err := d.DialAndSend(m)
+	if err != nil {
+		utils.Log("email_code.log", 1).Println("发送邮件失败", err)
+	}
 	return err
+}
+
+func randCode() string {
+	code := make([]byte, 5)
+	dict := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+	for i := 0; i < 5; i++ {
+		code[i] = dict[rand.Intn(len(dict)-1)]
+	}
+	return string(code)
 }
