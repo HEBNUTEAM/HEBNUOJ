@@ -19,17 +19,6 @@ import (
 
 type CheckCodeController struct{}
 
-// 图形验证码验证
-func (serviceCheckCode *CheckCodeController) VerifyCode(ctx *gin.Context) {
-	captchaId := ctx.Query("captchaId")
-	pngCode := ctx.Query("pngCode")
-	if captcha.VerifyString(captchaId, pngCode) {
-		response.Success(ctx, nil, "验证成功")
-	} else {
-		response.Response(ctx, http.StatusBadRequest, 400, nil, "验证码错误")
-	}
-}
-
 // 加载图形验证码，也可作为初始加载验证码使用，只生成id
 func (serviceCheckCode *CheckCodeController) ReloadVerifyCode(ctx *gin.Context) {
 	captchaId := captcha.NewLen(4)
@@ -74,20 +63,6 @@ func (serviceCheckCode *CheckCodeController) GenEmailVerifyCode(ctx *gin.Context
 		return
 	}
 	response.Success(ctx, nil, "邮箱验证码申请成功")
-}
-
-func (serviceCheckCode *CheckCodeController) VerifyEmailCode(ctx *gin.Context) {
-	email := ctx.Query("email")
-	code := ctx.Query("code")
-	client := common.GetRedisClient()
-	incode, err := client.Get(email).Result()
-	if err != nil {
-		utils.Log("email_code.log", 1).Println("redis get出错", err)
-		return
-	}
-	if incode == code {
-		response.Success(ctx, nil, "邮箱验证码验证成功")
-	}
 }
 
 // 发送邮箱验证码

@@ -7,6 +7,7 @@ import (
 	"github.com/HEBNUOJ/response"
 	"github.com/HEBNUOJ/utils"
 	"github.com/HEBNUOJ/vo"
+	"github.com/dchest/captcha"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
@@ -22,7 +23,9 @@ func Register(ctx *gin.Context) {
 	// 获取参数
 	nickname := requestUser.NickName
 	email := requestUser.Email
-	//verification := requestUser.Verification
+	verification := requestUser.Verification
+	captcha := requestUser.Captcha
+	captchaId := requestUser.CaptchaId
 	password1 := requestUser.Password1
 	password2 := requestUser.Password2
 
@@ -48,6 +51,13 @@ func Register(ctx *gin.Context) {
 	}
 	if !isEmailValid(email) {
 		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "邮箱不合法")
+	}
+	if !VerifyCode(captchaId, captcha) {
+		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "图像验证码错误")
+	}
+	if !VerifyEmailCode(email, verification) {
+		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "邮箱验证码错误")
+
 	}
 	hasedPassword, err := bcrypt.GenerateFromPassword([]byte(password1), bcrypt.DefaultCost)
 	if err != nil {
@@ -125,4 +135,25 @@ func isEmailValid(email string) bool {
 	pattern := `\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*`
 	reg := regexp.MustCompile(pattern)
 	return reg.MatchString(email)
+}
+
+// 验证邮箱验证码
+func VerifyEmailCode(email, code string) bool {
+	client := common.GetRedisClient()
+	inCode, err := client.Get(email).Result()
+	if err != nil {
+		utils.Log("email_code.log", 1).Println("redis get出错", err)
+	}
+	if inCode == code {
+		return true
+	}
+	return false
+}
+
+// 图形验证码验证
+func VerifyCode(captchaId, pngCode string) bool {
+	if captcha.VerifyString(captchaId, pngCode) {
+		return true
+	}
+	return false
 }
