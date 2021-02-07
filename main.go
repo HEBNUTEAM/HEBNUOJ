@@ -12,7 +12,9 @@ import (
 func main() {
 	utils.InitDbConfig()
 	db := common.InitDB()
+	client := common.InitRedis()
 	defer db.Close()
+	defer client.Close()
 	r := router.CollectRegisterAndLoginRoute(gin.Default())
 	r = router.CollectVerifyRoute(r)
 	port := viper.GetString("server.port")
