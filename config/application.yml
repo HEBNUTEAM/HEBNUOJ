@@ -18,5 +18,5 @@ redis:
 email:
   addr: sakuramoe@foxmail.com
   password: jmjzhqkvnsmxbbec
-  host: smtp.exmail.qq.com
+  host: smtp.qq.com
   port: 465
