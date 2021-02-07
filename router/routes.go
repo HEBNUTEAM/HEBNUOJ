@@ -16,9 +16,17 @@ func CollectRegisterAndLoginRoute(r *gin.Engine) *gin.Engine {
 }
 
 func CollectVerifyRoute(r *gin.Engine) *gin.Engine {
+	r1 := r.Group("/api/captcha") // 图形验证码处理路由
 	checkCodeController := new(controller.CheckCodeController)
-	r.GET("/api/refresh", checkCodeController.ReloadVerifyCode)
-	r.GET("/api/show/:captchaId", checkCodeController.GenVerifyCode)
-	r.GET("/api/verify", checkCodeController.VerifyCode)
+	{
+		r1.GET("/refresh", checkCodeController.ReloadVerifyCode)
+		r1.GET("/show/:captchaId", checkCodeController.GenVerifyCode)
+		r1.GET("/verify", checkCodeController.VerifyCode)
+	}
+	r2 := r.Group("api/email")
+	{
+		r2.GET("/refresh", checkCodeController.GenEmailVerifyCode)
+		r2.GET("/verify", checkCodeController.VerifyCode)
+	}
 	return r
 }

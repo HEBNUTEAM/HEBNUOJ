@@ -1,5 +1,6 @@
 server:
   port: 8000
+
 datasource:
   driverName: mysql
   host: 127.0.0.1
@@ -8,3 +9,14 @@ datasource:
   username: root
   password: 69719900
   charset: utf8
+
+redis:
+  addr: 127.0.0.1:6379
+  password:
+  db: 0
+
+email:
+  addr: sakuramoe@foxmail.com
+  password: jmjzhqkvnsmxbbec
+  host: smtp.exmail.qq.com
+  port: 465
