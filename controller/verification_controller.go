@@ -119,6 +119,7 @@ func sendEmailVerifyCode(email, code string) error {
 
 func randCode() string {
 	code := make([]byte, 5)
+	rand.Seed(time.Now().Unix())
 	dict := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 	for i := 0; i < 5; i++ {
 		code[i] = dict[rand.Intn(len(dict)-1)]
