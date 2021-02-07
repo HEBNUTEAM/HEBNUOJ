@@ -25,8 +25,8 @@ func CollectVerifyRoute(r *gin.Engine) *gin.Engine {
 	}
 	r2 := r.Group("api/email")
 	{
-		r2.GET("/refresh", checkCodeController.GenEmailVerifyCode)
-		r2.GET("/verify", checkCodeController.VerifyCode)
+		r2.POST("/refresh", checkCodeController.GenEmailVerifyCode)
+		r2.POST("/verify", checkCodeController.VerifyEmailCode)
 	}
 	return r
 }
