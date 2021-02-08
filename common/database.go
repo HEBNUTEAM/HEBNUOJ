@@ -18,7 +18,7 @@ func InitDB() *gorm.DB {
 	username := viper.GetString("datasource.username")
 	password := viper.GetString("datasource.password")
 	charset := viper.GetString("datasource.charset")
-	args := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=%s&parseTime=true",
+	args := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=%s&parseTime=true&loc=Local",
 		username,
 		password,
 		host,
@@ -31,6 +31,7 @@ func InitDB() *gorm.DB {
 	}
 	db.SingularTable(true) // 禁止表名为结构体的复数
 	db.AutoMigrate(&model.User{})
+	db.AutoMigrate(&model.LoginLog{})
 	DB = db
 	return db
 }

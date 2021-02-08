@@ -11,7 +11,6 @@ func CollectRegisterAndLoginRoute(r *gin.Engine) *gin.Engine {
 	r.POST("/api/auth/register", controller.Register)
 	r.POST("/api/auth/login", controller.Login)
 	r.POST("/api/auth/info", middleware.AuthMiddleware(), controller.Info)
-	r.POST("/api/auth/")
 	return r
 }
 
@@ -21,12 +20,10 @@ func CollectVerifyRoute(r *gin.Engine) *gin.Engine {
 	{
 		r1.GET("/refresh", checkCodeController.ReloadVerifyCode)
 		r1.GET("/show/:captchaId", checkCodeController.GenVerifyCode)
-		r1.GET("/verify", checkCodeController.VerifyCode)
 	}
 	r2 := r.Group("api/email")
 	{
 		r2.POST("/refresh", checkCodeController.GenEmailVerifyCode)
-		r2.POST("/verify", checkCodeController.VerifyEmailCode)
 	}
 	return r
 }

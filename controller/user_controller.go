@@ -53,11 +53,12 @@ func Register(ctx *gin.Context) {
 		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "邮箱不合法")
 	}
 	if !VerifyCode(captchaId, captcha) {
-		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "图像验证码错误")
+		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "图形验证码错误")
+		return
 	}
 	if !VerifyEmailCode(email, verification) {
 		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "邮箱验证码错误")
-
+		return
 	}
 	hasedPassword, err := bcrypt.GenerateFromPassword([]byte(password1), bcrypt.DefaultCost)
 	if err != nil {
@@ -68,6 +69,7 @@ func Register(ctx *gin.Context) {
 	if ip == "::1" {
 		ip = "127.0.0.1"
 	}
+	// 定义User表字段
 	newUser := model.User{
 		Email:      email,
 		Submit:     0,
@@ -81,6 +83,17 @@ func Register(ctx *gin.Context) {
 		Role:       "common",
 	}
 	db.Create(&newUser)
+
+	// 定义LoginLog表字段
+	newLoginLog := model.LoginLog{
+		Email:     email,
+		Password:  string(hasedPassword),
+		Ip:        ip,
+		LoginTime: time.Now(),
+		Failure:   0,
+	}
+	db.Create(&newLoginLog)
+
 	response.Success(ctx, nil, "注册成功")
 }
 
@@ -90,18 +103,45 @@ func Login(ctx *gin.Context) {
 	ctx.Bind(&requestUser)
 	// 获取参数
 	email := requestUser.Email
-	//verification := requestUser.Verification
+	captchaId := requestUser.CaptchaId
+	pngCode := requestUser.Captcha
 	password := requestUser.Password1
+
+	var (
+		user model.User
+		log  model.LoginLog
+	)
+
+	// 更新LoginLog表字段
+	db.Where("email = ?", email).First(&log)
+	hasedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	ip := ctx.ClientIP()
+	if ip == "::1" {
+		ip = "127.0.0.1"
+	}
+
+	log.LoginTime = time.Now()
+	log.Password = string(hasedPassword)
+	log.Ip = ip
+
 	// 判断用户是否存在
-	var user model.User
 	db.Where("email = ?", email).First(&user)
 	if user.Id == 0 {
 		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "用户不存在或邮箱错误")
 		return
 	}
+	if log.Failure > 3 {
+		if !VerifyCode(captchaId, pngCode) {
+			response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "图形验证码错误")
+			return
+		}
+	}
+
 	// 判断密码是否正确
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
 		response.Response(ctx, http.StatusBadRequest, 400, nil, "密码错误")
+		log.Failure += 1
+		db.Save(&log) // 更新log的全部字段
 		return
 	}
 
@@ -113,6 +153,10 @@ func Login(ctx *gin.Context) {
 		utils.Log("token.log", 5).Println(err) // 记录错误日志
 		return
 	}
+
+	log.Failure = 0
+	db.Save(&log) // 更新log的全部字段
+
 	response.Success(ctx, gin.H{"token": token}, "登陆成功")
 }
 
