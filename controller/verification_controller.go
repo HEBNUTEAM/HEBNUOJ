@@ -3,7 +3,6 @@ package controller
 import (
 	"bytes"
 	"github.com/HEBNUOJ/common"
-	"github.com/HEBNUOJ/dto"
 	"github.com/HEBNUOJ/model"
 	"github.com/HEBNUOJ/response"
 	"github.com/HEBNUOJ/utils"
@@ -12,7 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 	"gopkg.in/gomail.v2"
-	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
@@ -23,10 +21,7 @@ type CheckCodeController struct{}
 // 加载图形验证码，也可作为初始加载验证码使用，只生成id
 func (serviceCheckCode *CheckCodeController) ReloadVerifyCode(ctx *gin.Context) {
 	captchaId := captcha.NewLen(4)
-	var captcha dto.CaptchaResponse
-	captcha.CaptchaId = captchaId
-	captcha.ImageUrl = "captcha/" + captchaId + ".png"
-	response.Success(ctx, gin.H{"captcha": captcha}, "")
+	response.Success(ctx, gin.H{"CaptchaId": captchaId}, "")
 }
 
 // 生成图形验证码
@@ -53,7 +48,7 @@ func (serviceCheckCode *CheckCodeController) GenEmailVerifyCode(ctx *gin.Context
 			"邮箱验证码已存在")
 		return
 	}
-	code := randCode()
+	code := utils.RandCode(5)
 	err := sendEmailVerifyCode(email, code)
 	if err != nil { // 如果发送邮件失败则不插入数据库中，防止重复发送
 		return
@@ -106,14 +101,4 @@ func sendEmailVerifyCode(email, code string) error {
 		utils.Log("email_code.log", 1).Println("发送邮件失败", err)
 	}
 	return err
-}
-
-func randCode() string {
-	code := make([]byte, 5)
-	rand.Seed(time.Now().Unix())
-	dict := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
-	for i := 0; i < 5; i++ {
-		code[i] = dict[rand.Intn(len(dict)-1)]
-	}
-	return string(code)
 }
