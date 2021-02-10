@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"github.com/HEBNUOJ/common"
 	"github.com/HEBNUOJ/dto"
+	"github.com/HEBNUOJ/model"
 	"github.com/HEBNUOJ/response"
 	"github.com/HEBNUOJ/utils"
 	"github.com/HEBNUOJ/vo"
@@ -63,6 +64,21 @@ func (serviceCheckCode *CheckCodeController) GenEmailVerifyCode(ctx *gin.Context
 		return
 	}
 	response.Success(ctx, nil, "邮箱验证码申请成功")
+}
+
+// 判断用户在登陆的时候是否需要验证码
+func (serviceCheckCode *CheckCodeController) IsNeedCaptcha(ctx *gin.Context) {
+	requestUser := vo.LoginVo{}
+	ctx.Bind(&requestUser)
+	email := requestUser.Email
+	var log = model.LoginLog{}
+	common.GetDB().Where("email = ?", email).First(&log)
+
+	if log.Failure > 3 {
+		response.Success(ctx, nil, "true")
+	} else {
+		response.Success(ctx, nil, "false")
+	}
 }
 
 // 发送邮箱验证码

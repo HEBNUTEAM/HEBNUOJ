@@ -6,11 +6,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func CollectRegisterAndLoginRoute(r *gin.Engine) *gin.Engine {
-	r.Use(middleware.CorsMiddleware())
-	r.POST("/api/auth/register", controller.Register)
-	r.POST("/api/auth/login", controller.Login)
-	r.POST("/api/auth/info", middleware.AuthMiddleware(), controller.Info)
+func CollectAuthorizeRoute(r *gin.Engine) *gin.Engine {
+	r1 := r.Group("/api/auth") //授权处理路由
+	{
+		r1.Use(middleware.CorsMiddleware())
+		r1.POST("/api/auth/register", controller.Register)
+		r1.POST("/api/auth/login", controller.Login)
+		r1.POST("/api/auth/info", middleware.AuthMiddleware(), controller.Info)
+	}
 	return r
 }
 
@@ -20,6 +23,7 @@ func CollectVerifyRoute(r *gin.Engine) *gin.Engine {
 	{
 		r1.GET("/refresh", checkCodeController.ReloadVerifyCode)
 		r1.GET("/show/:captchaId", checkCodeController.GenVerifyCode)
+		r1.POST("/isNeedCaptcha", checkCodeController.IsNeedCaptcha)
 	}
 	r2 := r.Group("api/email")
 	{

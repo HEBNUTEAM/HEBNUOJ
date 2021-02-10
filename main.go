@@ -15,7 +15,7 @@ func main() {
 	client := common.InitRedis()
 	defer db.Close()
 	defer client.Close()
-	r := router.CollectRegisterAndLoginRoute(gin.Default())
+	r := router.CollectAuthorizeRoute(gin.Default())
 	r = router.CollectVerifyRoute(r)
 	port := viper.GetString("server.port")
 	if port != "" {
