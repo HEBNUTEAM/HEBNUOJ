@@ -7,12 +7,9 @@ import (
 	"github.com/HEBNUOJ/response"
 	"github.com/HEBNUOJ/utils"
 	"github.com/HEBNUOJ/vo"
-	"github.com/dchest/captcha"
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
-	"regexp"
 	"time"
 )
 
@@ -29,42 +26,37 @@ func Register(ctx *gin.Context) {
 	password1 := requestUser.Password1
 	password2 := requestUser.Password2
 
-	if len(nickname) > 25 || len(nickname) == 0 {
-		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil,
-			"用户名的长度必须大于等于1个字符，小于等于25个字符")
+	errString := ""
+	switch {
+	case len(nickname) > 25 || len(nickname) == 0:
+		errString = "用户名的长度必须大于等于1个字符，小于等于25个字符"
+	case len(password1) < 6:
+		errString = "密码不能小于6位"
+	case password1 != password2:
+		errString = "两次密码不一致"
+	case utils.IsEmailExist(db, email):
+		errString = "邮箱已存在"
+	case !utils.IsEmailValid(email):
+		errString = "邮箱不合法"
+	case !utils.VerifyCode(captchaId, captcha):
+		errString = "图形验证码错误"
+	case !utils.VerifyEmailCode(email, verification):
+		errString = "邮箱验证码错误"
+	}
+
+	if len(errString) > 0 {
+		response.Response(ctx, http.StatusInternalServerError, 422, nil, errString)
 		return
 	}
 
-	if len(password1) < 6 {
-		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "密码不能小于6位")
-
-		return
-	}
-
-	if password1 != password2 {
-		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "两次密码不一致")
-		return
-	}
-	if isEmailExist(db, email) {
-		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "邮箱已存在")
-		return
-	}
-	if !isEmailValid(email) {
-		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "邮箱不合法")
-	}
-	if !VerifyCode(captchaId, captcha) {
-		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "图形验证码错误")
-		return
-	}
-	if !VerifyEmailCode(email, verification) {
-		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "邮箱验证码错误")
-		return
-	}
+	// 加密密码
 	hasedPassword, err := bcrypt.GenerateFromPassword([]byte(password1), bcrypt.DefaultCost)
 	if err != nil {
 		response.Response(ctx, http.StatusInternalServerError, 500, nil, "加密错误")
 		return
 	}
+
+	// 获取ip
 	ip := ctx.ClientIP()
 	if ip == "::1" {
 		ip = "127.0.0.1"
@@ -124,25 +116,28 @@ func Login(ctx *gin.Context) {
 	log.Password = string(hasedPassword)
 	log.Ip = ip
 
-	// 判断用户是否存在
 	db.Where("email = ?", email).First(&user)
-	if user.Id == 0 {
-		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "用户不存在或邮箱错误")
-		return
-	}
-	if log.Failure > 3 {
-		if !VerifyCode(captchaId, pngCode) {
-			response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "图形验证码错误")
-			return
-		}
+	errCode := 400
+	errString := ""
+
+	switch {
+	case user.Id == 0: // 判断用户是否存在
+		errCode, errString = 422, "用户不存在或邮箱错误"
+	case log.Failure > 3 && !utils.VerifyCode(captchaId, pngCode): // 失败次数大于3则需要使用图形验证码
+		errCode, errString = 422, "图形验证码错误"
+	case !utils.IsPasswordValid(user.Password, password):
+		log.Failure += 1
+		db.Save(&log)
 	}
 
-	// 判断密码是否正确
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
-		response.Response(ctx, http.StatusBadRequest, 400, nil, "密码错误")
-		log.Failure += 1
-		db.Save(&log) // 更新log的全部字段
-		return
+	// 如果出现错误，则返回错误码和错误信息
+	if len(errString) > 0 {
+		switch {
+		case errCode == 400:
+			response.Response(ctx, http.StatusBadRequest, 400, nil, "密码错误")
+		default:
+			response.Response(ctx, http.StatusInternalServerError, 422, nil, errString)
+		}
 	}
 
 	// 发放token给前端
@@ -164,40 +159,4 @@ func Info(ctx *gin.Context) {
 	user, _ := ctx.Get("user")
 	response.Success(ctx, gin.H{"user": dto.ToUserDto(user.(model.User))}, "")
 
-}
-
-func isEmailExist(db *gorm.DB, email string) bool {
-	var user model.User
-	db.Where("email = ?", email).First(&user)
-	if user.Id > 0 {
-		return true
-	}
-	return false
-}
-
-func isEmailValid(email string) bool {
-	pattern := `\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*`
-	reg := regexp.MustCompile(pattern)
-	return reg.MatchString(email)
-}
-
-// 验证邮箱验证码
-func VerifyEmailCode(email, code string) bool {
-	client := common.GetRedisClient()
-	inCode, err := client.Get(email).Result()
-	if err != nil {
-		utils.Log("email_code.log", 1).Println("redis get出错", err)
-	}
-	if inCode == code {
-		return true
-	}
-	return false
-}
-
-// 图形验证码验证
-func VerifyCode(captchaId, pngCode string) bool {
-	if captcha.VerifyString(captchaId, pngCode) {
-		return true
-	}
-	return false
 }
