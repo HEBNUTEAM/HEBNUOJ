@@ -31,7 +31,29 @@ func (serviceCheckCode *CheckCodeController) GenVerifyCode(ctx *gin.Context) {
 	ctx.Writer.Header().Set("Pragma", "no-cache")
 	ctx.Writer.Header().Set("Expires", "0")
 	ctx.Writer.Header().Set("Content-Type", "image/png")
-	id := ctx.Param("captchaId")
+
+	// 获取验证码id的参数，并限制访问次数
+	requestUser := vo.LoginVo{}
+	ctx.Bind(&requestUser)
+	id := requestUser.CaptchaId
+	client := common.GetRedisClient()
+	ip := ctx.ClientIP()
+
+	if client.Exists(ip+"captcha").Val() == 0 {
+		err := client.Set(ip+"captcha", 1, 0).Err()
+		utils.Log("redis.log", 1).Println("数据库插入失败", err)
+		return
+	} else if client.Exists(ip+"captcha").Val() >= 10 { // 如果请求次数大于等于6次则设置ttl为30s
+		_, err := client.Expire(ip+"captcha", 30*time.Second).Result()
+		if err != nil {
+			utils.Log("redis.log", 1).Println("数据库查询失败", err)
+			return
+		}
+		response.Response(ctx, http.StatusBadRequest, 400, nil, "请过30s后再尝试")
+	} else { // 在redis里面增加一次请求次数
+		client.Incr(ip + "captcha")
+	}
+
 	var content bytes.Buffer
 	captcha.WriteImage(&content, id, 100, 50)
 	http.ServeContent(ctx.Writer, ctx.Request, id+".png", time.Time{}, bytes.NewReader(content.Bytes()))
