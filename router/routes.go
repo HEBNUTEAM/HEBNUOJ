@@ -22,7 +22,7 @@ func CollectVerifyRoute(r *gin.Engine) *gin.Engine {
 	checkCodeController := new(controller.CheckCodeController)
 	{
 		r1.GET("/refresh", checkCodeController.ReloadVerifyCode)
-		r1.GET("/show/:captchaId", checkCodeController.GenVerifyCode)
+		r1.POST("/show", checkCodeController.GenVerifyCode)
 		r1.POST("/isNeedCaptcha", checkCodeController.IsNeedCaptcha)
 	}
 	r2 := r.Group("api/email") // 邮箱验证码处理路由
