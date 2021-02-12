@@ -85,7 +85,7 @@ func Register(ctx *gin.Context) {
 		Failure:   0,
 	}
 	db.Create(&newLoginLog)
-
+	common.GetRedisClient().Del(ip + ":captcha")
 	response.Success(ctx, nil, "注册成功")
 }
 
@@ -151,7 +151,7 @@ func Login(ctx *gin.Context) {
 
 	log.Failure = 0
 	db.Save(&log) // 更新log的全部字段
-
+	common.GetRedisClient().Del(ip + ":captcha")
 	response.Success(ctx, gin.H{"token": token}, "登陆成功")
 }
 
