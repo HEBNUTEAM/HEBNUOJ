@@ -45,7 +45,7 @@ func Register(ctx *gin.Context) {
 	}
 
 	if len(errString) > 0 {
-		response.Response(ctx, http.StatusInternalServerError, 422, nil, errString)
+		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, errString)
 		return
 	}
 
@@ -136,7 +136,7 @@ func Login(ctx *gin.Context) {
 		case errCode == 400:
 			response.Response(ctx, http.StatusBadRequest, 400, nil, "密码错误")
 		default:
-			response.Response(ctx, http.StatusInternalServerError, 422, nil, errString)
+			response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, errString)
 		}
 	}
 
