@@ -7,9 +7,10 @@ import (
 )
 
 func CollectAuthorizeRoute(r *gin.Engine) *gin.Engine {
+	r.Use(middleware.CorsMiddleware())
+	
 	r1 := r.Group("/api/auth") //授权处理路由
 	{
-		r1.Use(middleware.CorsMiddleware())
 		r1.POST("/register", controller.Register)
 		r1.POST("/login", controller.Login)
 		r1.POST("/info", middleware.AuthMiddleware(), controller.Info)
