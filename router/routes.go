@@ -8,7 +8,7 @@ import (
 
 func CollectAuthorizeRoute(r *gin.Engine) *gin.Engine {
 	r.Use(middleware.CorsMiddleware())
-	
+
 	r1 := r.Group("/api/auth") //授权处理路由
 	{
 		r1.POST("/register", controller.Register)
@@ -26,7 +26,7 @@ func CollectVerifyRoute(r *gin.Engine) *gin.Engine {
 		r1.POST("/show", checkCodeController.GenVerifyCode)
 		r1.POST("/isNeedCaptcha", checkCodeController.IsNeedCaptcha)
 	}
-	r2 := r.Group("api/email") // 邮箱验证码处理路由
+	r2 := r.Group("/api/email") // 邮箱验证码处理路由
 	{
 		r2.POST("/refresh", checkCodeController.GenEmailVerifyCode)
 	}
