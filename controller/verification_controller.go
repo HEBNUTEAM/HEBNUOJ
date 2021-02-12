@@ -2,6 +2,7 @@ package controller
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/HEBNUOJ/common"
 	"github.com/HEBNUOJ/model"
 	"github.com/HEBNUOJ/response"
@@ -39,19 +40,25 @@ func (serviceCheckCode *CheckCodeController) GenVerifyCode(ctx *gin.Context) {
 	client := common.GetRedisClient()
 	ip := ctx.ClientIP()
 
-	if client.Exists(ip+":captcha").Val() == 0 {
+	val, _ := client.Get(ip + ":captcha").Result()
+	CaptchaTime, _ := strconv.Atoi(val)
+	if CaptchaTime == 0 {
 		err := client.Set(ip+":captcha", 1, 0).Err()
 		if err != nil {
 			utils.Log("redis.log", 1).Println("数据库插入失败", err)
 			return
 		}
-	} else if client.Exists(ip+":captcha").Val() >= 10 { // 如果请求次数大于等于6次则设置ttl为30s
-		_, err := client.Expire(ip+":captcha", 30*time.Second).Result()
-		if err != nil {
-			utils.Log("redis.log", 1).Println("数据库查询失败", err)
-			return
+	} else if CaptchaTime >= 10 { // 如果请求次数大于等于10次,则限制请求
+		reply := client.Do("TTL", ip+":captcha").Val()
+		if reply != -1 { // 首次达到10次时设置ttl为30s
+			_, err := client.Expire(ip+":captcha", 30*time.Second).Result()
+			if err != nil {
+				utils.Log("redis.log", 1).Println("数据库查询失败", err)
+				return
+			}
 		}
-		response.Response(ctx, http.StatusBadRequest, 400, nil, "请过30s后再尝试")
+		msg := fmt.Sprintf("请过%ds后再重试", reply)
+		response.Response(ctx, http.StatusBadRequest, 400, nil, msg)
 		return
 	} else { // 在redis里面增加一次请求次数
 		client.Incr(ip + ":captcha")
