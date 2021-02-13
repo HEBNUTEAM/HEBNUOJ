@@ -31,6 +31,11 @@ func AuthMiddleware() gin.HandlerFunc {
 		jwtToken = jwtToken[7:]
 		token, claims, err := common.ParseToken(jwtToken)
 		flag, _ := common.GetRedisClient().Get(refreshToken).Result()
+		blackToken, _ := common.GetRedisClient().Get(jwtToken).Result() // jwt是否在黑名单中
+		if len(blackToken) == 0 {
+			ctx.Set("renewal", "true")
+		}
+
 		if !token.Valid && (err != nil && len(flag) == 0) { // 出现错误，或两个token均失效
 			ctx.JSON(http.StatusUnauthorized, gin.H{
 				"code": 401,
@@ -57,6 +62,8 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		// 用户存在，将user信息写入上下文
 		ctx.Set("user", user)
+		ctx.Set("renewal", "false")
+
 		ctx.Next()
 	}
 }
@@ -65,7 +72,13 @@ func RenewalTokenMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 
 		ctx.Next() // 先执行auth鉴权中间件，如果鉴权成功会继续往下执行
-		// 取出鉴权成功后的user对象
+		// 如果不用续签，则直接退出即可
+		flag, _ := ctx.Get("renewal")
+		if flag == "false" {
+			ctx.Next()
+		}
+
+		// 取出鉴权成功但需要续签的user对象
 		tmp, _ := ctx.Get("user")
 		user, _ := tmp.(model.User)
 
