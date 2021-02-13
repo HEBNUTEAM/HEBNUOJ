@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -159,7 +160,7 @@ func Login(ctx *gin.Context) {
 	}
 	// 发放refreshToken给前端
 	h := md5.New()
-	h.Write([]byte([]byte(email + string(time.Now().Unix())))) // 邮箱和当前时间戳拼接
+	h.Write([]byte(email + strconv.FormatInt(time.Now().Unix(), 10))) // 邮箱和当前时间戳拼接
 	cipherStr := h.Sum(nil)
 	refreshToken = hex.EncodeToString(cipherStr)
 
