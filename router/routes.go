@@ -13,7 +13,8 @@ func CollectAuthorizeRoute(r *gin.Engine) *gin.Engine {
 	{
 		r1.POST("/register", controller.Register)
 		r1.POST("/login", controller.Login)
-		r1.POST("/info", middleware.AuthMiddleware(), controller.Info)
+		r1.POST("/info", middleware.RenewalTokenMiddleware(),
+			middleware.AuthMiddleware(), controller.Info)
 	}
 	return r
 }

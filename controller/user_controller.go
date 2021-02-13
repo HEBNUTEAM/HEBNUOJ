@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"github.com/HEBNUOJ/common"
 	"github.com/HEBNUOJ/dto"
 	"github.com/HEBNUOJ/model"
@@ -141,7 +143,13 @@ func Login(ctx *gin.Context) {
 		return
 	}
 
-	// 发放token给前端
+	// 将原来的refreshToken删掉， accessToken加入黑名单，ttl设置为10分钟
+	jwtToken := ctx.GetHeader("Authorization")
+	refreshToken := ctx.GetHeader("RefreshToken")
+	common.GetRedisClient().Del(refreshToken)
+	common.GetRedisClient().Set(jwtToken, 1, 10*time.Minute)
+
+	// 发放jwtToken给前端
 	token, err := common.ReleaseToken(user)
 	if err != nil {
 		response.Response(ctx, http.StatusInternalServerError, 500, nil, "系统异常")
@@ -149,11 +157,18 @@ func Login(ctx *gin.Context) {
 		utils.Log("token.log", 5).Println(err) // 记录错误日志
 		return
 	}
+	// 发放refreshToken给前端
+	h := md5.New()
+	h.Write([]byte([]byte(email + string(time.Now().Unix())))) // 邮箱和当前时间戳拼接
+	cipherStr := h.Sum(nil)
+	refreshToken = hex.EncodeToString(cipherStr)
 
+	// 将refreshToken存入redis
+	common.GetRedisClient().Set(email, refreshToken, 72*time.Hour)
 	log.Failure = 0
-	db.Save(&log) // 更新log的全部字段
-	common.GetRedisClient().Del(ip + ":captcha")
-	response.Success(ctx, gin.H{"token": token}, "登陆成功")
+	db.Save(&log)                                // 更新log的全部字段
+	common.GetRedisClient().Del(ip + ":captcha") // 清除验证码限制
+	response.Success(ctx, gin.H{"token": token, "refresh": refreshToken}, "登陆成功")
 }
 
 func Info(ctx *gin.Context) {
