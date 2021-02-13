@@ -166,10 +166,7 @@ func Login(ctx *gin.Context) {
 	log.Failure = 0
 	db.Save(&log)                                // 更新log的全部字段
 	common.GetRedisClient().Del(ip + ":captcha") // 清除验证码限制
-	jwtString, _ := ctx.Get("jwtToken")
-	if jwtString != nil {
-		ctx.Writer.Header().Set("jwtToken", jwtString.(string))
-	}
+
 	response.Success(ctx, gin.H{"token": token, "refresh": refreshToken}, "登陆成功")
 }
 
@@ -183,6 +180,10 @@ func Logout(ctx *gin.Context) {
 
 func Info(ctx *gin.Context) {
 	user, _ := ctx.Get("user")
+	jwtString, _ := ctx.Get("jwtToken")
+	if jwtString != nil {
+		ctx.Writer.Header().Set("jwtToken", jwtString.(string))
+	}
 	response.Success(ctx, gin.H{"user": dto.ToUserDto(user.(model.User))}, "")
 	return
 }
