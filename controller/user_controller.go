@@ -167,7 +167,9 @@ func Login(ctx *gin.Context) {
 	db.Save(&log)                                // 更新log的全部字段
 	common.GetRedisClient().Del(ip + ":captcha") // 清除验证码限制
 	jwtString, _ := ctx.Get("jwtToken")
-	ctx.Writer.Header().Set("jwtToken", jwtString.(string))
+	if jwtString != nil {
+		ctx.Writer.Header().Set("jwtToken", jwtString.(string))
+	}
 	response.Success(ctx, gin.H{"token": token, "refresh": refreshToken}, "登陆成功")
 }
 
