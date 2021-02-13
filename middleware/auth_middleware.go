@@ -21,7 +21,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		if jwtToken == "" || !strings.HasPrefix(jwtToken, "Bearer ") {
 			ctx.JSON(http.StatusUnauthorized, gin.H{
 				"code": 401,
-				"msg":  "权限不足",
+				"msg":  "jwtToken格式错误",
 			})
 			ctx.Abort() // 抛弃该次请求
 			return
@@ -49,7 +49,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		if user.Id == 0 || user.Id != userID {
 			ctx.JSON(http.StatusUnauthorized, gin.H{
 				"code": 401,
-				"msg":  "权限不足",
+				"msg":  "用户权限不足",
 			})
 			ctx.Abort()
 			return
