@@ -33,7 +33,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		flag, _ := common.GetRedisClient().Get(refreshToken).Result()
 		blackToken, _ := common.GetRedisClient().Get(jwtToken).Result() // jwt是否在黑名单中
 		if len(blackToken) == 0 {
-			ctx.Set("renewal", "true")
+			ctx.Set("renewal", "false")
 		}
 
 		if !token.Valid && (err != nil && len(flag) == 0) { // 出现错误，或两个token均失效
@@ -62,7 +62,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		// 用户存在，将user信息写入上下文
 		ctx.Set("user", user)
-		ctx.Set("renewal", "false")
+		ctx.Set("renewal", "true")
 
 		ctx.Next()
 	}
