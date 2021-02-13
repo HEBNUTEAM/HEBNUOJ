@@ -94,7 +94,7 @@ func RenewalTokenMiddleware() gin.HandlerFunc {
 			utils.Log("token.log", 5).Println(err) // 记录错误日志
 			return
 		}
-		ctx.Writer.Header().Set("token", token)
+		ctx.Writer.Header().Add("token", token)
 		ctx.Next()
 	}
 }
