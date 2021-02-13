@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"github.com/HEBNUOJ/common"
 	"github.com/HEBNUOJ/model"
 	"github.com/HEBNUOJ/response"
@@ -12,7 +11,7 @@ import (
 	"time"
 )
 
-func AuthMiddleware() gin.HandlerFunc {
+func AuthRenewalMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// 获取jwtToken和refresToken
 		jwtToken := ctx.GetHeader("Authorization")
@@ -60,43 +59,21 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		// 用户存在，将user信息写入上下文
 		ctx.Set("user", user)
-		fmt.Sprintf("%s", err)
+
+		// 需要续签的情况
 		if len(flag) > 0 && (len(blackToken) == 0 || strings.Contains(err.Error(), "expired")) {
-			ctx.Set("renewal", "true")
-		} else {
-			ctx.Set("renewal", "false")
+			jwtToken := ctx.GetHeader("Authorization")
+			common.GetRedisClient().Set(jwtToken, 1, 10*time.Minute)
+			// 续签token
+			token, err := common.ReleaseToken(user)
+			if err != nil {
+				response.Response(ctx, http.StatusInternalServerError, 500, nil, "系统异常")
+				utils.Log("token.log", 5).Println(err) // 记录错误日志
+				return
+			}
+			ctx.Writer.Header().Set("token", token)
 		}
 
-		ctx.Next()
-	}
-}
-
-func RenewalTokenMiddleware() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-
-		ctx.Next() // 先执行auth鉴权中间件，如果鉴权成功会继续往下执行
-		// 如果不用续签，则直接退出即可
-		flag, _ := ctx.Get("renewal")
-		if flag == "false" {
-			ctx.Next()
-		}
-
-		// 取出鉴权成功但需要续签的user对象
-		tmp, _ := ctx.Get("user")
-		user, _ := tmp.(model.User)
-
-		jwtToken := ctx.GetHeader("Authorization")
-		common.GetRedisClient().Set(jwtToken, 1, 10*time.Minute)
-		// 续签token
-		token, err := common.ReleaseToken(user)
-		if err != nil {
-			response.Response(ctx, http.StatusInternalServerError, 500, nil, "系统异常")
-			utils.Log("token.log", 5).Println(err) // 记录错误日志
-			return
-		}
-		ctx.Set("jwtToken", token)
-		//ctx.Writer.Header().Set("token", token)
-		fmt.Println(token)
 		ctx.Next()
 	}
 }
