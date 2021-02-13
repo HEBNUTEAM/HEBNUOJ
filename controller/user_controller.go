@@ -145,10 +145,7 @@ func Login(ctx *gin.Context) {
 	}
 
 	// 将原来的refreshToken删掉， accessToken加入黑名单，ttl设置为10分钟
-	jwtToken := ctx.GetHeader("Authorization")
-	refreshToken := ctx.GetHeader("RefreshToken")
-	common.GetRedisClient().Del(refreshToken)
-	common.GetRedisClient().Set(jwtToken, 1, 10*time.Minute)
+	Logout(ctx)
 
 	// 发放jwtToken给前端
 	token, err := common.ReleaseToken(user)
@@ -162,7 +159,7 @@ func Login(ctx *gin.Context) {
 	h := md5.New()
 	h.Write([]byte(email + strconv.FormatInt(time.Now().Unix(), 10))) // 邮箱和当前时间戳拼接
 	cipherStr := h.Sum(nil)
-	refreshToken = hex.EncodeToString(cipherStr)
+	refreshToken := hex.EncodeToString(cipherStr)
 
 	// 将refreshToken存入redis
 	common.GetRedisClient().Set(email, refreshToken, 72*time.Hour)
@@ -170,6 +167,14 @@ func Login(ctx *gin.Context) {
 	db.Save(&log)                                // 更新log的全部字段
 	common.GetRedisClient().Del(ip + ":captcha") // 清除验证码限制
 	response.Success(ctx, gin.H{"token": token, "refresh": refreshToken}, "登陆成功")
+}
+
+// 退出登录函数
+func Logout(ctx *gin.Context) {
+	jwtToken := ctx.GetHeader("Authorization")
+	refreshToken := ctx.GetHeader("RefreshToken")
+	common.GetRedisClient().Del(refreshToken)
+	common.GetRedisClient().Set(jwtToken, 1, 10*time.Minute)
 }
 
 func Info(ctx *gin.Context) {
