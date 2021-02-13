@@ -31,7 +31,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		jwtToken = jwtToken[7:]
 		token, claims, err := common.ParseToken(jwtToken)
 		flag, _ := common.GetRedisClient().Get(refreshToken).Result()
-		if err != nil || (!token.Valid && len(flag) == 0) { // 出现错误，或两个token均失效
+		if !token.Valid && (err != nil && len(flag) == 0) { // 出现错误，或两个token均失效
 			ctx.JSON(http.StatusUnauthorized, gin.H{
 				"code": 401,
 				"msg":  "权限不足",
