@@ -138,6 +138,7 @@ func Login(ctx *gin.Context) {
 		default:
 			response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, errString)
 		}
+		return
 	}
 
 	// 发放token给前端
@@ -158,5 +159,5 @@ func Login(ctx *gin.Context) {
 func Info(ctx *gin.Context) {
 	user, _ := ctx.Get("user")
 	response.Success(ctx, gin.H{"user": dto.ToUserDto(user.(model.User))}, "")
-
+	return
 }
