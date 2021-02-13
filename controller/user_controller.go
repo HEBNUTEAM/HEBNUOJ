@@ -162,7 +162,7 @@ func Login(ctx *gin.Context) {
 	refreshToken := hex.EncodeToString(cipherStr)
 
 	// 将refreshToken存入redis
-	common.GetRedisClient().Set(email, refreshToken, 72*time.Hour)
+	common.GetRedisClient().Set(refreshToken, 1, 72*time.Hour)
 	log.Failure = 0
 	db.Save(&log)                                // 更新log的全部字段
 	common.GetRedisClient().Del(ip + ":captcha") // 清除验证码限制
