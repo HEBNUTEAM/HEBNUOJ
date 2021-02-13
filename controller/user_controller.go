@@ -49,14 +49,14 @@ func Register(ctx *gin.Context) {
 	}
 
 	if len(errString) > 0 {
-		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, errString)
+		response.Response(ctx, http.StatusOK, 422, nil, errString)
 		return
 	}
 
 	// 加密密码
 	hasedPassword, err := bcrypt.GenerateFromPassword([]byte(password1), bcrypt.DefaultCost)
 	if err != nil {
-		response.Response(ctx, http.StatusInternalServerError, 500, nil, "加密错误")
+		response.Response(ctx, http.StatusOK, 500, nil, "加密错误")
 		return
 	}
 
@@ -133,6 +133,7 @@ func Login(ctx *gin.Context) {
 		errCode, errString = 422, "图形验证码错误"
 	case !utils.IsPasswordValid(user.Password, password):
 		log.Failure += 1
+		errString = "密码错误"
 		db.Save(&log)
 	}
 
@@ -140,9 +141,9 @@ func Login(ctx *gin.Context) {
 	if len(errString) > 0 {
 		switch {
 		case errCode == 400:
-			response.Response(ctx, http.StatusBadRequest, 400, nil, "密码错误")
+			response.Response(ctx, http.StatusOK, 400, nil, "密码错误")
 		default:
-			response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, errString)
+			response.Response(ctx, http.StatusOK, 422, nil, errString)
 		}
 		return
 	}

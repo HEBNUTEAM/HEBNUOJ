@@ -19,7 +19,7 @@ func AuthRenewalMiddleware() gin.HandlerFunc {
 
 		// 验证格式, 判断token是否以"Bearer "为前缀
 		if jwtToken == "" || !strings.HasPrefix(jwtToken, "Bearer ") {
-			ctx.JSON(http.StatusUnauthorized, gin.H{
+			ctx.JSON(http.StatusOK, gin.H{
 				"code": 401,
 				"msg":  "jwtToken格式错误",
 			})
@@ -34,7 +34,7 @@ func AuthRenewalMiddleware() gin.HandlerFunc {
 		blackToken, _ := common.GetRedisClient().Get(jwtToken).Result() // jwt是否在黑名单中
 
 		if !token.Valid && len(flag) == 0 { //   如果jwtToken不合法，并且refreshToken也不在redis中
-			ctx.JSON(http.StatusUnauthorized, gin.H{
+			ctx.JSON(http.StatusOK, gin.H{
 				"code": 401,
 				"msg":  "权限不足",
 			})
@@ -49,7 +49,7 @@ func AuthRenewalMiddleware() gin.HandlerFunc {
 		db.First(&user, userID)
 
 		if user.Id == 0 || user.Id != userID {
-			ctx.JSON(http.StatusUnauthorized, gin.H{
+			ctx.JSON(http.StatusOK, gin.H{
 				"code": 401,
 				"msg":  "用户权限不足",
 			})
@@ -74,7 +74,7 @@ func AuthRenewalMiddleware() gin.HandlerFunc {
 			}
 			ctx.Writer.Header().Set("token", token)
 		}
-		
+
 		ctx.Next()
 	}
 }

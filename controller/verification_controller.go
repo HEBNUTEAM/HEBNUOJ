@@ -58,7 +58,7 @@ func (serviceCheckCode *CheckCodeController) GenVerifyCode(ctx *gin.Context) {
 			}
 		}
 		msg := fmt.Sprintf("请过%ds后再重试", reply)
-		response.Response(ctx, http.StatusBadRequest, 400, nil, msg)
+		response.Response(ctx, http.StatusOK, 400, nil, msg)
 		return
 	} else { // 在redis里面增加一次请求次数
 		client.Incr(ip + ":captcha")
@@ -76,7 +76,7 @@ func (serviceCheckCode *CheckCodeController) GenEmailVerifyCode(ctx *gin.Context
 	email := requestUser.Email
 	client := common.GetRedisClient()
 	if client.Exists(email).Val() > 0 {
-		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil,
+		response.Response(ctx, http.StatusOK, 422, nil,
 			"邮箱验证码已存在")
 		return
 	}
