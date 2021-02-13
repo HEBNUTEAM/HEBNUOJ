@@ -145,7 +145,10 @@ func Login(ctx *gin.Context) {
 	}
 
 	// 将原来的refreshToken删掉， accessToken加入黑名单，ttl设置为10分钟
-	Logout(ctx)
+	jwtToken := ctx.GetHeader("Authorization")
+	refreshToken := ctx.GetHeader("RefreshToken")
+	common.GetRedisClient().Del(refreshToken)
+	common.GetRedisClient().Set(jwtToken, 1, 10*time.Minute)
 
 	// 发放jwtToken给前端
 	token, err := common.ReleaseToken(user)
@@ -159,7 +162,7 @@ func Login(ctx *gin.Context) {
 	h := md5.New()
 	h.Write([]byte(email + strconv.FormatInt(time.Now().Unix(), 10))) // 邮箱和当前时间戳拼接
 	cipherStr := h.Sum(nil)
-	refreshToken := hex.EncodeToString(cipherStr)
+	refreshToken = hex.EncodeToString(cipherStr)
 
 	// 将refreshToken存入redis
 	common.GetRedisClient().Set(refreshToken, 1, 72*time.Hour)
@@ -176,6 +179,7 @@ func Logout(ctx *gin.Context) {
 	refreshToken := ctx.GetHeader("RefreshToken")
 	common.GetRedisClient().Del(refreshToken)
 	common.GetRedisClient().Set(jwtToken, 1, 10*time.Minute)
+	response.Success(ctx, nil, "退出成功")
 }
 
 func Info(ctx *gin.Context) {
