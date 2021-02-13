@@ -77,6 +77,8 @@ func RenewalTokenMiddleware() gin.HandlerFunc {
 		ctx.Next() // 先执行auth鉴权中间件，如果鉴权成功会继续往下执行
 		// 如果不用续签，则直接退出即可
 		flag, _ := ctx.Get("renewal")
+
+		fmt.Println("flag",flag)
 		if flag == "false" {
 			ctx.Next()
 		}
@@ -86,6 +88,7 @@ func RenewalTokenMiddleware() gin.HandlerFunc {
 		user, _ := tmp.(model.User)
 
 		jwtToken := ctx.GetHeader("Authorization")
+		fmt.Println("旧的jwtToken:" + jwtToken)
 		common.GetRedisClient().Set(jwtToken, 1, 10*time.Minute)
 		// 续签token
 		token, err := common.ReleaseToken(user)
@@ -94,9 +97,10 @@ func RenewalTokenMiddleware() gin.HandlerFunc {
 			utils.Log("token.log", 5).Println(err) // 记录错误日志
 			return
 		}
+		fmt.Println("新的jwtToken:" + token)
 		ctx.Set("jwtToken", token)
 		//ctx.Writer.Header().Set("token", token)
-		fmt.Println(token)
+		//fmt.Println(token)
 		ctx.Next()
 	}
 }

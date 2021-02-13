@@ -3,6 +3,7 @@ package controller
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"fmt"
 	"github.com/HEBNUOJ/common"
 	"github.com/HEBNUOJ/dto"
 	"github.com/HEBNUOJ/model"
@@ -93,6 +94,8 @@ func Register(ctx *gin.Context) {
 }
 
 func Login(ctx *gin.Context) {
+
+	fmt.Printf("%+v\n", ctx)
 	db := common.GetDB()
 	requestUser := vo.LoginVo{}
 	ctx.Bind(&requestUser)
@@ -179,8 +182,11 @@ func Logout(ctx *gin.Context) {
 }
 
 func Info(ctx *gin.Context) {
+
 	user, _ := ctx.Get("user")
 	jwtString, _ := ctx.Get("jwtToken")
+	fmt.Println(user)
+	fmt.Println(jwtString)
 	if jwtString != nil {
 		ctx.Writer.Header().Set("jwtToken", jwtString.(string))
 	}
