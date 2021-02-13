@@ -184,12 +184,6 @@ func Logout(ctx *gin.Context) {
 func Info(ctx *gin.Context) {
 
 	user, _ := ctx.Get("user")
-	jwtString, _ := ctx.Get("jwtToken")
-	fmt.Println(user)
-	fmt.Println(jwtString)
-	if jwtString != nil {
-		ctx.Writer.Header().Set("jwtToken", jwtString.(string))
-	}
 	response.Success(ctx, gin.H{"user": dto.ToUserDto(user.(model.User))}, "")
 	return
 }
