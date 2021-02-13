@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"github.com/HEBNUOJ/common"
 	"github.com/HEBNUOJ/model"
 	"github.com/HEBNUOJ/response"
@@ -33,7 +34,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		flag, _ := common.GetRedisClient().Get(refreshToken).Result()
 		blackToken, _ := common.GetRedisClient().Get(jwtToken).Result() // jwt是否在黑名单中
 
-		if !token.Valid && (err != nil && len(flag) == 0) { // 出现错误，或两个token均失效
+		if !token.Valid && len(flag) == 0 { //   如果jwtToken不合法，并且refreshToken也不在redis中
 			ctx.JSON(http.StatusUnauthorized, gin.H{
 				"code": 401,
 				"msg":  "权限不足",
@@ -59,10 +60,11 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		// 用户存在，将user信息写入上下文
 		ctx.Set("user", user)
-		if len(blackToken) == 0 {
-			ctx.Set("renewal", "false")
-		} else {
+		fmt.Sprintf("%s", err)
+		if len(flag) > 0 && (len(blackToken) == 0 || strings.Contains(err.Error(), "expired")) {
 			ctx.Set("renewal", "true")
+		} else {
+			ctx.Set("renewal", "false")
 		}
 
 		ctx.Next()
