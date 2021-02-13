@@ -79,5 +79,6 @@ func RenewalTokenMiddleware() gin.HandlerFunc {
 			return
 		}
 		response.Success(ctx, gin.H{"token": token}, "续签成功")
+		ctx.Next()
 	}
 }
