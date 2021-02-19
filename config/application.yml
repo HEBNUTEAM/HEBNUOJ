@@ -7,12 +7,12 @@ datasource:
   port: 3306
   database: ginnessential
   username: root
-  password: yangzixu
+  password: 69719900
   charset: utf8
 
 redis:
   addr: 127.0.0.1:6379
-  password: yzx199812
+  password:
   db: 0
 
 email:
