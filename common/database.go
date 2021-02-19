@@ -32,6 +32,7 @@ func InitDB() *gorm.DB {
 	db.SingularTable(true) // 禁止表名为结构体的复数
 	db.AutoMigrate(&model.User{})
 	db.AutoMigrate(&model.LoginLog{})
+	db.AutoMigrate(&model.PublicProblem{})
 	DB = db
 	return db
 }
