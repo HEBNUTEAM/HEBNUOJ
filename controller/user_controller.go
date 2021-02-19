@@ -3,7 +3,6 @@ package controller
 import (
 	"crypto/md5"
 	"encoding/hex"
-	"fmt"
 	"github.com/HEBNUOJ/common"
 	"github.com/HEBNUOJ/dto"
 	"github.com/HEBNUOJ/model"
@@ -94,8 +93,6 @@ func Register(ctx *gin.Context) {
 }
 
 func Login(ctx *gin.Context) {
-
-	fmt.Printf("%+v\n", ctx)
 	db := common.GetDB()
 	requestUser := vo.LoginVo{}
 	ctx.Bind(&requestUser)
@@ -155,7 +152,7 @@ func Login(ctx *gin.Context) {
 	common.GetRedisClient().Set(jwtToken, 1, 10*time.Minute)
 
 	// 发放jwtToken给前端
-	token, err := common.ReleaseToken(user)
+	jwtToken, err := common.ReleaseToken(user)
 	if err != nil {
 		response.Response(ctx, http.StatusInternalServerError, 500, nil, "系统异常")
 
@@ -174,7 +171,7 @@ func Login(ctx *gin.Context) {
 	db.Save(&log)                                // 更新log的全部字段
 	common.GetRedisClient().Del(ip + ":captcha") // 清除验证码限制
 
-	response.Success(ctx, gin.H{"token": token, "refresh": refreshToken}, "登陆成功")
+	response.Success(ctx, gin.H{"jwtToken": jwtToken, "refresh": refreshToken}, "登陆成功")
 }
 
 // 退出登录函数

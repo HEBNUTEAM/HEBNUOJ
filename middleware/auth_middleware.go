@@ -60,7 +60,6 @@ func AuthRenewalMiddleware() gin.HandlerFunc {
 		// 用户存在，将user信息写入上下文
 		ctx.Set("user", user)
 
-
 		// 需要续签的情况
 		if len(flag) > 0 && (len(blackToken) == 0 || strings.Contains(err.Error(), "expired")) {
 			jwtToken := ctx.GetHeader("Authorization")
@@ -72,9 +71,8 @@ func AuthRenewalMiddleware() gin.HandlerFunc {
 				utils.Log("token.log", 5).Println(err) // 记录错误日志
 				return
 			}
-			ctx.Writer.Header().Set("token", token)
+			ctx.Writer.Header().Set("jwtToken", token)
 		}
-
 		ctx.Next()
 	}
 }
