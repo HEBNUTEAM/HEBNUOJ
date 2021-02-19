@@ -3,7 +3,7 @@ package model
 import "time"
 
 type User struct {
-	Id         int    `gorm:autoIncrement;primary_key`
+	Id         int    `gorm:"autoIncrement;primary_key"`
 	Email      string `gorm:"type:varchar(30);uniqueIndex"`
 	Submit     int
 	Solved     int
