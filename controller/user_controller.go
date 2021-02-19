@@ -76,6 +76,8 @@ func Register(ctx *gin.Context) {
 		NickName:   nickname,
 		School:     "",
 		Role:       "common",
+		Rating:     0,
+		Coin:       0,
 	}
 	db.Create(&newUser)
 

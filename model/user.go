@@ -14,4 +14,6 @@ type User struct {
 	NickName   string    `gorm:"type:varchar(25);not null"`
 	School     string    `gorm:"type:varchar(25);"`
 	Role       string    `gorm:"type:varchar(15);not null"`
+	Rating     int
+	Coin       float64
 }

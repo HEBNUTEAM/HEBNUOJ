@@ -14,6 +14,8 @@ type UserDto struct {
 	CreateTime time.Time `json:"createtime"`
 	School     string    `json:"school"`
 	Role       string    `json:"role"`
+	Rating     int       `json:"rating"`
+	Coin       float64   `json:"coin"`
 }
 
 func ToUserDto(user model.User) UserDto {
@@ -26,5 +28,7 @@ func ToUserDto(user model.User) UserDto {
 		CreateTime: user.CreateTime,
 		School:     user.School,
 		Role:       user.Role,
+		Coin:       user.Coin,
+		Rating:     user.Rating,
 	}
 }
