@@ -13,7 +13,7 @@ type PublicProblem struct {
 	Spj          bool      `gorm:"default:false;not null"`
 	Hint         string    `gorm:"type:text"`
 	Source       string    `gorm:"type:varchar(40);"`
-	InDate       time.Time `gorm:"type:datetime;"`
+	InDate       time.Time `gorm:"type:datetime;autoCreateTime;"`
 	TimeLimit    int       `gorm:"not null"`
 	MemoryLimit  int       `gorm:"not null"`
 	Defunct      int       `gorm:"default:false;not null"`
