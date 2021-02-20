@@ -100,12 +100,12 @@ func (p *ProblemController) ShowProblemList(ctx *gin.Context) {
 		utils.Log("problemset.log", 1).Println("分页查询失败", err)
 		return
 	}
-	problemJosn := make([]dto.PublicProblemDto, 0)
+	problemJson := make([]dto.PublicProblemDto, 0)
 	for i := 0; i < len(problems); i++ {
-		problemJosn[i] = dto.ToProblemDto(problems[i])
+		problemJson[i] = dto.ToProblemDto(problems[i])
 	}
 
-	response.Success(ctx, gin.H{"problems": problemJosn}, "分页查询成功")
+	response.Success(ctx, gin.H{"problems": problemJson}, "分页查询成功")
 }
 
 func (p *ProblemController) SubmitProblem(ctx *gin.Context) {
