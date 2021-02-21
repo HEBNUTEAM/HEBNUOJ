@@ -76,3 +76,21 @@ func AuthRenewalMiddleware() gin.HandlerFunc {
 		ctx.Next()
 	}
 }
+
+// 鉴权：是否为管理员
+func AuthAdminMiddleware() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		jwtToken := ctx.GetHeader("Authorization")[7:]
+		_, claims, _ := common.ParseToken(jwtToken)
+		userID := claims.UserId
+		var user model.User
+		common.GetDB().First(&user, userID)
+		if user.Role != "admin" && user.Role != "superadmin" {
+			ctx.JSON(http.StatusOK, gin.H{
+				"code": 401,
+				"msg":  "用户权限不足",
+			})
+		}
+		ctx.Next()
+	}
+}

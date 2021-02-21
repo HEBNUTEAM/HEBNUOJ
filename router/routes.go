@@ -33,3 +33,21 @@ func CollectVerifyRoute(r *gin.Engine) *gin.Engine {
 	}
 	return r
 }
+
+func CollectProblemRoute(r *gin.Engine) *gin.Engine {
+
+	r1 := r.Group("/api/problem")
+	r1.Use(middleware.AuthRenewalMiddleware())
+	problemController := new(controller.ProblemController)
+	{
+		r1.GET("/", problemController.ShowProblemList)
+		r1.POST("/add", middleware.AuthAdminMiddleware(), problemController.AddProblem)
+		r1.GET("/:id", problemController.QueryProblem)
+		r1.POST("/del", middleware.AuthAdminMiddleware(), problemController.DelProblem)
+		r1.POST("/update", middleware.AuthAdminMiddleware(), problemController.UpdateProblem)
+		r1.POST("/submit", problemController.SubmitProblem)
+		//r1.GET("/discuss/:id", problemController.Disscuss)
+		//r1.GET("/solution/:id", problemController.Solution)
+	}
+	return r
+}

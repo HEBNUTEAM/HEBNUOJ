@@ -17,6 +17,7 @@ func main() {
 	defer client.Close()
 	r := router.CollectAuthorizeRoute(gin.Default())
 	r = router.CollectVerifyRoute(r)
+	r = router.CollectProblemRoute(r)
 	port := viper.GetString("server.port")
 	if port != "" {
 		panic(r.Run(":" + port))
