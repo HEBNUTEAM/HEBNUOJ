@@ -46,6 +46,7 @@ func (p *ProblemController) AddProblem(ctx *gin.Context) {
 		response.Response(ctx, http.StatusOK, 422, nil, errString)
 		return
 	}
+
 	newProblem := model.PublicProblem{
 		Title:        title,
 		Description:  description,
@@ -64,17 +65,26 @@ func (p *ProblemController) AddProblem(ctx *gin.Context) {
 		Submit:       0,
 		Degree:       degree,
 	}
-	common.GetDB().Create(&newProblem)
-	response.Success(ctx, nil, "添加题目成功")
 
+	common.GetDB().Save(&newProblem)
+	response.Success(ctx, nil, "添加题目成功")
 }
 
 func (p *ProblemController) UpdateProblem(ctx *gin.Context) {
-
+	p.AddProblem(ctx)
 }
 
 func (p *ProblemController) DelProblem(ctx *gin.Context) {
-
+	requestProblem := dto.PublicProblemDto{}
+	ctx.Bind(&requestProblem)
+	var problem model.PublicProblem
+	common.GetDB().Where("id = ?", requestProblem.Id).First(&problem)
+	if problem.Id == 0 {
+		response.Response(ctx, http.StatusOK, 422, nil, "题目不存在")
+		return
+	}
+	common.GetDB().Delete(problem)
+	response.Success(ctx, nil, "删除成功")
 }
 
 func (p *ProblemController) QueryProblem(ctx *gin.Context) {
