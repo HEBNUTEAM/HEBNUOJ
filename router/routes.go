@@ -35,9 +35,9 @@ func CollectVerifyRoute(r *gin.Engine) *gin.Engine {
 }
 
 func CollectProblemRoute(r *gin.Engine) *gin.Engine {
-	r.Use(middleware.AuthRenewalMiddleware())
 
 	r1 := r.Group("/api/problem")
+	r1.Use(middleware.AuthRenewalMiddleware())
 	problemController := new(controller.ProblemController)
 	{
 		r1.GET("/", problemController.ShowProblemList)
@@ -49,4 +49,5 @@ func CollectProblemRoute(r *gin.Engine) *gin.Engine {
 		//r1.GET("/discuss/:id", problemController.Disscuss)
 		//r1.GET("/solution/:id", problemController.Solution)
 	}
+	return r
 }

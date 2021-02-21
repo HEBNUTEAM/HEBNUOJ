@@ -102,7 +102,7 @@ func (p *ProblemController) ShowProblemList(ctx *gin.Context) {
 	}
 	problemJson := make([]dto.PublicProblemDto, 0)
 	for i := 0; i < len(problems); i++ {
-		problemJson[i] = dto.ToProblemDto(problems[i])
+		problemJson = append(problemJson,dto.ToProblemDto(problems[i]))
 	}
 
 	response.Success(ctx, gin.H{"problems": problemJson}, "分页查询成功")
