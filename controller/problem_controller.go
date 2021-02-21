@@ -18,6 +18,7 @@ func (p *ProblemController) AddProblem(ctx *gin.Context) {
 	requestProblem := dto.PublicProblemDto{}
 	ctx.Bind(&requestProblem)
 	// 获取参数
+	id := requestProblem.Id
 	title := requestProblem.Title
 	description := requestProblem.Description
 	input := requestProblem.Input
@@ -65,9 +66,16 @@ func (p *ProblemController) AddProblem(ctx *gin.Context) {
 		Submit:       0,
 		Degree:       degree,
 	}
+	resMsg := ""
+	if id != 0 {
+		newProblem.Id = id
+		resMsg = "更新题目成功"
+	} else {
+		resMsg = "添加题目成功"
+	}
 
 	common.GetDB().Save(&newProblem)
-	response.Success(ctx, nil, "添加题目成功")
+	response.Success(ctx, nil, resMsg)
 }
 
 func (p *ProblemController) UpdateProblem(ctx *gin.Context) {
