@@ -78,7 +78,7 @@ func (p *ProblemController) DelProblem(ctx *gin.Context) {
 	requestProblem := dto.PublicProblemDto{}
 	ctx.Bind(&requestProblem)
 	var problem model.PublicProblem
-	common.GetDB().Where("id = ?", requestProblem.Id).First(&problem)
+	common.GetDB().Where("id = ?", requestProblem.Id).First(&problem).Unscoped()
 	if problem.Id == 0 {
 		response.Response(ctx, http.StatusOK, 422, nil, "题目不存在")
 		return
